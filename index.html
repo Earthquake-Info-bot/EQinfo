@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>震度マップ（スプシ＋K列対応）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height:100%; margin:0; padding:0; }
+    .intensity-marker {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      border-radius:50%;
+      width:24px;
+      height:24px;
+      font-weight:bold;
+      font-size:12px;
+      border:2px solid rgba(0,0,0,0.2);
+      box-sizing:border-box;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const map = L.map("map").setView([35.6812,139.7671],6);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; CARTO',
+      subdomains:'abcd',
+      maxZoom:19
+    }).addTo(map);
+
+    const colors = {
+      "1":"rgb(242,242,255)","2":"rgb(0,170,255)","3":"rgb(0,65,255)",
+      "4":"rgb(250,230,150)","5-":"rgb(255,230,0)","5+":"rgb(255,200,0)",
+      "6-":"rgb(255,40,0)","6+":"rgb(165,0,33)","7":"rgb(180,0,104)"
+    };
+
+    const intensityOrder = {"1":1,"2":2,"3":3,"4":4,"5-":5,"5+":6,"6-":7,"6+":8,"7":9};
+
+    function getTextColor(rgb){
+      const [r,g,b] = rgb.match(/\d+/g).map(Number);
+      return (r*299 + g*587 + b*114)/1000 > 128 ? "black" : "white";
+    }
+
+    function addIntensityMarker(lat,lon,intensity){
+      const color = colors[intensity] || "gray";
+      const textColor = getTextColor(color);
+      const icon = L.divIcon({
+        className:'',
+        html:`<div class="intensity-marker" style="background:${color};color:${textColor}">${intensity}</div>`,
+        iconSize:[24,24],
+        iconAnchor:[12,12]
+      });
+      L.marker([lat,lon],{icon,interactive:false,zIndexOffset:intensityOrder[intensity]*1000}).addTo(map);
+    }
+
+    // GAS から座標＋震度取得
+    fetch("https://script.google.com/macros/s/AKfycbwaBGjmKPWnGIfjrVtkQJ4mZXrtzIPs46JYDGNB_K-cg3pSGjj3BojKT7a6IkII_xPrYA/exec") // ←ここを自分のデプロイURLに置き換え
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(p => addIntensityMarker(p.lat,p.lon,p.intensity));
+      });
+  </script>
+</body>
+</html>
