@@ -39,11 +39,13 @@ const colors = {
 };
 const intensityOrder = {"1":1,"2":2,"3":3,"4":4,"5-":5,"5+":6,"6-":7,"6+":8,"7":9};
 
+// 背景色に応じて文字色決定
 function getTextColor(rgb){
   const [r,g,b] = rgb.match(/\d+/g).map(Number);
   return (r*299 + g*587 + b*114)/1000 > 128 ? "black" : "white";
 }
 
+// マーカー管理
 let markers = [];
 function clearMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
 
@@ -53,9 +55,14 @@ function addIntensityMarker(lat, lon, intensity){
   const icon = L.divIcon({
     className:'',
     html:`<div class="intensity-marker" style="background:${color};color:${textColor}">${intensity}</div>`,
-    iconSize:[32,32], iconAnchor:[16,16]
+    iconSize:[32,32],
+    iconAnchor:[16,16]
   });
-  const marker = L.marker([lat,lon],{icon,interactive:false,zIndexOffset:(intensityOrder[intensity]||0)*1000}).addTo(map);
+  const marker = L.marker([lat,lon],{
+    icon,
+    interactive:false,
+    zIndexOffset:(intensityOrder[intensity]||0)*1000
+  }).addTo(map);
   markers.push(marker);
 }
 
@@ -69,10 +76,10 @@ function updateMarkers(data){
     addIntensityMarker(lat,lon,intensity);
   });
   const bounds = data.map(p=>[Number(p.lat), Number(p.lon)]);
-  map.fitBounds(bounds);
+  if(bounds.length>0) map.fitBounds(bounds);
 }
 
-// GAS の JSON URL に置き換える
+// GAS のデプロイ URL に置き換える
 fetch("https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLhrt9_vJYQe98rLqshIrTG8g3hiuc6dcyknFhKonkMJN7j5umnLmyLjosg_fgiDZI112ocKswCtWqaQnb3CMrbiXaz5-pRoDT9j0YQZNtAm5E7w-2PShH6PdHY5LsddH3h5J6s4sfqEa2SvcsA37vE_rvKatM_kZDrqnvZuwHJCPl0R2YJSoc9Q7wlqErVD0b2OlrqotdeLAyavF3pAWpX6zX60pnIWMy0ai01EnSv6w2wKVEs9OP7VC9MkLtwPr6g479rL0xTDo2Cg16keSzlZckUfrDp_rC-gr3FI&lib=Mf5rsCSNvJKLq9bzgklzDgRhmz1QfjaVA")
   .then(res=>res.json())
   .then(data=>updateMarkers(data));
