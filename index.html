@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>地震速報マップ</title>
+  <title>地震情報マップ（テスト）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,7 +26,7 @@
 <body>
 <div id="map"></div>
 <script>
-const map = L.map("map").setView([35.6812,139.7671],6);
+const map = L.map("map").setView([43,141],7);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; CARTO',
@@ -60,41 +60,16 @@ function addIntensityMarker(lat, lon, intensity){
   L.marker([lat, lon], {icon, interactive:false}).addTo(map);
 }
 
-// マーカー更新
-let markers = [];
-function updateMarkers(data){
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  data.forEach(p => {
-    const lat = Number(p.lat);
-    const lon = Number(p.lon);
-    const intensity = String(p.intensity);
-    if(!lat || !lon || !intensity) return;
-    addIntensityMarker(lat, lon, intensity);
-  });
-}
+// テスト用の座標と震度データ
+const testData = [
+  {name:"石狩市花川", lat:43.17, lon:141.32, intensity:3},
+  {name:"札幌中央区北2条", lat:43.06, lon:141.33, intensity:5},
+  {name:"函館市美原", lat:41.82, lon:140.75, intensity:4},
+  {name:"千歳市北栄", lat:42.83, lon:141.64, intensity:2}
+];
 
-// API fetch
-function fetchData(){
-  const url = "ここに震度速報APIのURLを入れる" + "?ts=" + new Date().getTime();
-  fetch(url)
-    .then(res => res.json())
-    .then(data => updateMarkers(data))
-    .catch(err => console.error("JSON fetch error:", err));
-}
-
-// 初回取得
-fetchData();
-
-// 更新ボタン
-const btn = document.createElement("button");
-btn.textContent = "最新データ更新";
-btn.style.position = "absolute";
-btn.style.top = "10px";
-btn.style.right = "10px";
-btn.style.zIndex = 1000;
-btn.onclick = fetchData;
-document.body.appendChild(btn);
+// マーカー描画
+testData.forEach(p => addIntensityMarker(p.lat, p.lon, p.intensity));
 </script>
 </body>
 </html>
