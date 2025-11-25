@@ -1,75 +1,202 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>地震情報マップ（テスト）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    html, body, #map { height:100%; margin:0; padding:0; }
-    .intensity-marker {
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      border-radius:50%;
-      width:24px;
-      height:24px;
-      font-weight:bold;
-      font-size:12px;
-      border:2px solid rgba(0,0,0,0.2);
-      box-sizing:border-box;
-      pointer-events:none;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>地震情報ビューアーv1.1.1</title>
+<style>
+body {
+  font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
+  white-space: pre-wrap;
+  margin: 5px;
+  padding: 5px;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+#eew { 
+  margin: 0; 
+  padding: 0; 
+  font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
+}
+#status { 
+  font-size: 12px; 
+  margin-bottom: 0px; 
+}
+#copyBtn {
+  font-size: 12px;
+  padding: 2px 5px;
+  margin-bottom: 0px;
+  cursor: pointer;
+}
+</style>
 </head>
 <body>
-<div id="map"></div>
+<div id="status">更新中...</div>
+<button id="copyBtn">本文をコピー</button>
+<pre id="eew">読み込み中...</pre>
+
 <script>
-const map = L.map("map").setView([43,141],7);
+// DOM
+const outputEl = document.getElementById("eew");
+const statusEl = document.getElementById("status");
+const copyBtn = document.getElementById("copyBtn");
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; CARTO',
-  subdomains:'abcd',
-  maxZoom:19
-}).addTo(map);
-
-// 震度カラー
-const colors = {
-  "1":"rgb(242,242,255)","2":"rgb(0,170,255)","3":"rgb(0,65,255)",
-  "4":"rgb(250,230,150)","5-":"rgb(255,230,0)","5+":"rgb(255,200,0)",
-  "6-":"rgb(255,40,0)","6+":"rgb(165,0,33)","7":"rgb(180,0,104)"
-};
-
-// 背景色に応じて文字色
-function getTextColor(rgb){
-  const [r,g,b] = rgb.match(/\d+/g).map(Number);
-  return (r*299 + g*587 + b*114)/1000 > 128 ? "black" : "white";
+// 日時フォーマット
+function formatDate(date, format="yyyy/MM/dd HH:mm:ss"){
+  const z = n => n.toString().padStart(2,"0");
+  return format.replace("yyyy", date.getFullYear())
+               .replace("MM", z(date.getMonth()+1))
+               .replace("dd", z(date.getDate()))
+               .replace("HH", z(date.getHours()))
+               .replace("mm", z(date.getMinutes()))
+               .replace("ss", z(date.getSeconds()));
 }
 
-// マーカー追加
-function addIntensityMarker(lat, lon, intensity){
-  const color = colors[intensity] || "gray";
-  const textColor = getTextColor(color);
-  const icon = L.divIcon({
-    className:'',
-    html:`<div class="intensity-marker" style="background:${color};color:${textColor}">${intensity}</div>`,
-    iconSize:[24,24],
-    iconAnchor:[12,12]
+// scale / depth / tsunami / area text
+function scaleToText(scale){ 
+  if(scale==null||scale<0) return "不明";
+  const map = {10:'1',20:'2',30:'3',40:'4',45:'5弱',50:'5強',55:'6弱',60:'6強',70:'7'};
+  return map[scale]||'不明';
+}
+function depthToText(depth){
+  if(depth==null||depth<0) return "不明";
+  if(depth===0) return "ごく浅い";
+  return depth+"km";
+}
+function buildTsunamiText(domestic, foreign){
+  const d = domestic||"Unknown";
+  const f = foreign||"";
+  if(d==="Warning"||d==="Watch") return "津波に関する情報を発表しています。";
+  if(d==="NonEffective") return "津波予報(若干の海面変動)を発表していますが、被害の心配はありません。";
+  if(d==="None"){
+    if(f==="Warning"||f==="Watch"||f==="WarningNearby") return "この地震による国内での津波の心配はありません。";
+    return "この地震による津波の心配はありません。";
+  }
+  if(d==="Checking") return "この地震による津波の有無を現在調査中です。";
+  if(d==="Unknown") return "この地震による津波の有無は不明です。";
+  return "#Tsunami:Error!";
+}
+function intensityDescription(scale){
+  return {'3':'揺れを感じました','4':'やや強い揺れを感じました','5弱':'強い揺れを感じました','5強':'強い揺れを感じました','6弱':'激しい揺れを感じました','6強':'激しい揺れを感じました','7':'非常に激しい揺れを感じました'}[scale]||'';
+}
+function compareScale(a,b){const order={'1':10,'2':20,'3':30,'4':40,'5弱':45,'5強':50,'6弱':55,'6強':60,'7':70};return(order[a]||0)-(order[b]||0);}
+
+// buildAreaText は元のまま簡略化
+function buildAreaText(points){
+  if(!points||points.length===0) return "▽震度情報不明\n";
+  const cityMaxScale={};
+  points.forEach(p=>{
+    const scale = scaleToText(p.scale);
+    const city = p.addr||"不明";
+    const key = `${p.pref}:${city}`;
+    if(!cityMaxScale[key]||compareScale(scale,cityMaxScale[key])>0) cityMaxScale[key]=scale;
   });
-  L.marker([lat, lon], {icon, interactive:false}).addTo(map);
+
+  const grouped={};
+  Object.keys(cityMaxScale).forEach(k=>{
+    const [pref, city]=k.split(':');
+    const scale=cityMaxScale[k];
+    if(!grouped[scale]) grouped[scale]={};
+    if(!grouped[scale][pref]) grouped[scale][pref]=[];
+    grouped[scale][pref].push(city);
+  });
+
+  const prefOrder=[ "北海道","青森県","秋田県","岩手県","宮城県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","東京都","千葉県","神奈川県","山梨県","静岡県","愛知県","岐阜県","福井県","石川県","富山県","長野県","新潟県","滋賀県","京都府","奈良県","三重県","和歌山県","大阪府","兵庫県","鳥取県","岡山県","島根県","広島県","山口県","香川県","徳島県","高知県","愛媛県","福岡県","大分県","宮崎県","鹿児島県","熊本県","佐賀県","長崎県","沖縄県"];
+
+  let text="";
+  Object.keys(grouped).sort((a,b)=>compareScale(b,a)).forEach(scale=>{
+    text+=`\n▽震度${scale}\n`;
+    prefOrder.forEach(pref=>{
+      if(grouped[scale][pref]){
+        text+=`【${pref}】\n${grouped[scale][pref].sort().join("　")}\n`;
+      }
+    });
+  });
+  return text.trim();
 }
 
-// テスト用の座標と震度データ
-const testData = [
-  {name:"石狩市花川", lat:43.17, lon:141.32, intensity:3},
-  {name:"札幌中央区北2条", lat:43.06, lon:141.33, intensity:5},
-  {name:"函館市美原", lat:41.82, lon:140.75, intensity:4},
-  {name:"千歳市北栄", lat:42.83, lon:141.64, intensity:2}
-];
+// buildEarthquakeBody
+function buildEarthquakeBody(latest){
+  const eq = latest.earthquake;
+  const h = eq.hypocenter||{};
+  const place = h.name||"(発生地点不明)";
+  const maxScale = scaleToText(eq.maxScale);
+  const magnitude = (h.magnitude!=null&&h.magnitude>=0)?h.magnitude.toFixed(1):"不明";
+  const depth = depthToText(h.depth);
+  const tsunamiText = buildTsunamiText(eq.domesticTsunami, eq.foreignTsunami);
+  const commentText = (latest.comments&&latest.comments.freeFormComment)?`\n備考：${latest.comments.freeFormComment.trim()}`:"";
+  const intensityInfo = (latest.points&&latest.points.length>0)?buildAreaText(latest.points):"▽震度情報不明";
 
-// マーカー描画
-testData.forEach(p => addIntensityMarker(p.lat, p.lon, p.intensity));
+  switch(latest.issue?.type){
+    case "ScalePrompt":
+      return `《震度速報》
+${formatDate(new Date(eq.time),"HH時mm分")}頃、${intensityDescription(maxScale)}。
+　最大震度:${maxScale}
+${tsunamiText}${commentText}
+
+　●各地の震度情報●
+${intensityInfo}
+
+出典：P2P地震情報API(気象庁)`;
+    case "Destination":
+      return `《震源速報》
+${formatDate(new Date(eq.time),"HH時mm分")}頃、${place}で地震がありました。
+　M${magnitude}
+　震源の深さ:${depth}
+${tsunamiText}${commentText}
+
+出典：P2P地震情報API(気象庁)`;
+    case "DetailScale":
+    case "Foreign":
+    default:
+      return `《地震情報》
+${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で地震がありました。
+　最大震度:${maxScale}
+　M${magnitude}
+　震源の深さ:${depth}
+${tsunamiText}${commentText}
+
+　●各地の震度情報●
+${intensityInfo}
+
+出典：P2P地震情報API(気象庁)`;
+  }
+}
+
+// updateEQ
+async function updateEQ(){
+  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=5";
+  try{
+    const response = await fetch(url);
+    if(!response.ok) throw new Error(`APIアクセスエラー: ${response.status}`);
+    const data = await response.json();
+    if(!data||data.length===0){ outputEl.textContent="データが存在しません"; return; }
+
+    const messages = data.slice(0,5).map(buildEarthquakeBody);
+    outputEl.textContent = messages.join("\n\n--------------------\n\n");
+
+    // 更新日時
+    statusEl.textContent = `最終更新: ${formatDate(new Date())}`;
+  }catch(e){
+    outputEl.textContent="取得エラー: "+e.message;
+  }
+}
+
+// 初回と自動更新
+updateEQ();
+setInterval(updateEQ, 2000);
+
+// コピー機能
+copyBtn.addEventListener("click",()=>{
+  const text = outputEl.textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const original = copyBtn.textContent;
+    copyBtn.textContent="コピー完了";
+    setTimeout(()=>{copyBtn.textContent=original;},1500);
+  }).catch(err=>{
+    alert("コピーに失敗しました: "+err);
+  });
+});
 </script>
 </body>
 </html>
