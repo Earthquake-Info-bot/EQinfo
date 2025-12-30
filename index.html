@@ -166,7 +166,7 @@ function buildEarthquakeBody(latest){
   const magnitude = (h.magnitude!=null&&h.magnitude>=0)?h.magnitude.toFixed(1):"不明";
   const depth = depthToText(h.depth);
   const tsunamiText = buildTsunamiText(eq.domesticTsunami, eq.foreignTsunami);
-  const commentText = (latest.comments&&latest.comments.freeFormComment)?`\n\n備考：${latest.comments.freeFormComment.trim()}`:"";
+  const commentText = (latest.comments&&latest.comments.freeFormComment)?`${latest.comments.freeFormComment.trim()}`:"";
   const intensityInfo = (latest.points&&latest.points.length>0)?buildAreaText(latest.points):"▽震度情報不明";
 
   switch(latest.issue?.type){
