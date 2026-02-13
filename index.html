@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>地震情報ビューアーv1.4.1</title>
+<title>地震情報ビューアーv1.4.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -221,7 +221,7 @@ ${formatDate(new Date(eq.time),"HH時mm分")}頃、${place}で地震がありま
 ${tsunamiText}${commentText}`;
     case "Foreign":
       return `《遠地地震情報》
-${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で地震がありました。
+${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で規模の大きな地震がありました。
 　最大震度:${maxScale}
 　M${magnitude}
 　震源の深さ:${depth}
