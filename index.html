@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>t地震情報ビューアーv1.4.4</title>
+<title>地震情報ビューアーv1.4.4</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -304,9 +304,9 @@ ${intensityInfo}${over5m}`;
 
 // updateEQ
 async function updateEQ(){
-  //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset";
+  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
   //const url = "https://script.google.com/macros/s/AKfycbzgP8R7vowRFrefHbUIkAcGt4NFjJZcuVnnpVqIjpprlCA44PtTk7ffHs-f4HP8Yk8A/exec";
-  const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&offset=2&since_date=20251212&until_date=20251212&quake_type=ScalePrompt&min_scale=40";
+  //const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&offset=2&since_date=20251212&until_date=20251212&quake_type=ScalePrompt&min_scale=40";
   try{
     const response = await fetch(url);
     if(!response.ok) throw new Error(`APIアクセスエラー: ${response.status}`);
