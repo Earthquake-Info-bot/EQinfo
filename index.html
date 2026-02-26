@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>地震情報ビューアーv1.4.2</title>
+<title>地震情報ビューアーv1.4.3</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -36,6 +36,23 @@ body {
 <pre id="eew">読み込み中...</pre>
 
 <script>
+let maxIntRegion = [];
+const izuShoto = ["伊豆大島","新島","神津島","三宅島","八丈島"];
+const ogasawara = ["小笠原"];
+const amamiGunto = ["奄美"];
+const chihoMap = {
+  "北海道地方": ["北海道"],
+  "東北地方": ["青森","岩手","宮城","秋田","山形","福島"],
+  "関東地方": ["茨城","栃木","群馬","埼玉","千葉","東京","神奈川"],
+  "甲信地方": ["山梨","長野"],
+  "北陸地方": ["新潟","富山","石川","福井"],
+  "東海地方": ["岐阜","静岡","愛知","三重"],
+  "近畿地方": ["滋賀","京都","大阪","兵庫","奈良","和歌山"],
+  "中国地方": ["鳥取","島根","岡山","広島","山口"],
+  "四国地方": ["徳島","香川","愛媛","高知"],
+  "九州地方": ["福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島"],
+  "沖縄地方": ["沖縄本島","大東島","宮古島","八重山"]
+};
 // DOM
 const outputEl = document.getElementById("eew");
 const statusEl = document.getElementById("status");
@@ -100,8 +117,9 @@ function compareScale(a,b){const order={'1':10,'2':20,'3':30,'4':40,'5弱':45,'5
 
 let unreportedAreas = [];
 // ★★★ buildAreaText をあなたの仕様に完全置き換え ★★★
-function buildAreaText(points) {
-unreportedAreas = [];
+function buildAreaText(points,maxInt) {
+  maxIntRegion = [];
+  unreportedAreas = [];
   let chiiki = "0";
   if (!points || points.length === 0) return "▽震度情報不明\n";
   const cityMaxScale = {};
@@ -118,6 +136,22 @@ unreportedAreas = [];
       const key = `${p.pref}:${city}`;
       if (!cityMaxScale[key] || compareScale(scale, cityMaxScale[key]) > 0) {
         cityMaxScale[key] = scale;
+      }
+
+      const scaleText = scaleToText(p.scale);
+      if (maxInt===scaleText) {
+        if (izuShoto.includes(city)){
+          if (!maxIntRegion.includes("伊豆諸島")) maxIntRegion.push("伊豆諸島");
+        } else if (ogasawara.includes(city)){
+          if (!maxIntRegion.includes("小笠原")) maxIntRegion.push("小笠原");
+        } else if (amamiGunto.includes(city)){
+          if (!maxIntRegion.includes("奄美群島")) maxIntRegion.push("奄美群島");
+        } else {
+          const chiho = Object.keys(chihoMap).find(key =>
+            chihoMap[key].some(name => p.pref.includes(name))
+          ) || "/ERROR!/";
+          if (!maxIntRegion.includes(chiho)) maxIntRegion.push(chiho);
+        }
       }
     } else {
       if(p.scale == 46){ // 未入電
@@ -148,7 +182,20 @@ unreportedAreas = [];
       }
     }
   });
+  let maxIntRegionFormatted;
+  const chihoMapOrder = [
+    "北海道地方","東北地方","関東地方","甲信地方","北陸地方","東海地方",
+    "近畿地方","中国地方","四国地方","九州地方","沖縄地方"
+  ];
 
+  if (!maxIntRegion.length || maxIntRegion.includes("/ERROR!/")) {
+    maxIntRegionFormatted = "対象なし";
+  } else {
+    maxIntRegionFormatted = maxIntRegion
+      .sort((a,b) => chihoMapOrder.indexOf(a) - chihoMapOrder.indexOf(b))
+      .join("・");
+  }
+  
   const grouped = {};
   Object.keys(cityMaxScale).forEach(k => {
     const [pref, city] = k.split(':');
@@ -182,7 +229,7 @@ unreportedAreas = [];
       }
     });
   });
-  return text.trim();
+  return {intensityText: text.trim(), maxIntRegionFormatted};;
 }
 // ★★★ ここまで buildAreaText ★★★
 
@@ -198,7 +245,22 @@ function buildEarthquakeBody(latest){
   const depth = depthToText(h.depth);
   const tsunamiText = buildTsunamiText(eq.domesticTsunami, eq.foreignTsunami);
   const commentText = (latest.comments&&latest.comments.freeFormComment)?`${latest.comments.freeFormComment.trim()}`:"";
-  const intensityInfo = (latest.points&&latest.points.length>0)?buildAreaText(latest.points):"▽震度情報不明";
+  const areaResult = (latest.points && latest.points.length > 0) 
+        ? buildAreaText(latest.points, maxScale) 
+        : { intensityText: "▽震度情報不明", maxIntRegionFormatted: "対象なし" };
+
+  // 震度情報テキストだけ取り出す
+  const intensityInfo = areaResult.intensityText;
+
+  // maxIntRegionFormatted が必要なら
+  let maxIntRegionFormatted = areaResult.maxIntRegionFormatted;
+  if (maxIntRegionFormatted==="対象なし") {
+    maxIntRegionFormatted = "";
+  } else {
+    maxIntRegionFormatted = maxIntRegionFormatted + "で";
+  }
+
+  
 let over5m = "";
 if(unreportedAreas.length > 0){
   over5m = "\n\n▽震度5弱以上と推定（未入電）\n" + unreportedAreas.join(" ");
@@ -207,7 +269,7 @@ if(unreportedAreas.length > 0){
   switch(latest.issue?.type){
     case "ScalePrompt":
       return `《震度速報》
-${formatDate(new Date(eq.time),"HH時mm分")}頃、${intensityDescription(maxScale)}。
+${formatDate(new Date(eq.time),"HH時mm分")}頃、${maxIntRegionFormatted}${intensityDescription(maxScale)}。
 　最大震度:${maxScale}
 ${tsunamiText}${commentText}
 
