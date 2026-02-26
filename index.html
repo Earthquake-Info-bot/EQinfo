@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>地震情報ビューアーv1.4.3</title>
+<title>t地震情報ビューアーv1.4.4</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -184,8 +184,8 @@ function buildAreaText(points,maxInt) {
   });
   let maxIntRegionFormatted;
   const chihoMapOrder = [
-    "北海道地方","東北地方","関東地方","甲信地方","北陸地方","東海地方",
-    "近畿地方","中国地方","四国地方","九州地方","沖縄地方"
+    "北海道地方","東北地方","関東地方","伊豆諸島","小笠原","甲信地方","北陸地方","東海地方",
+    "近畿地方","中国地方","四国地方","九州地方","奄美群島","沖縄地方"
   ];
 
   if (!maxIntRegion.length || maxIntRegion.includes("/ERROR!/")) {
@@ -268,12 +268,9 @@ if(unreportedAreas.length > 0){
 
   switch(latest.issue?.type){
     case "ScalePrompt":
-      return `《震度速報》
-${formatDate(new Date(eq.time),"HH時mm分")}頃、${maxIntRegionFormatted}${intensityDescription(maxScale)}。
-　最大震度:${maxScale}
-${tsunamiText}${commentText}
+      return `《震度速報　最大震度${maxScale}》
+${formatDate(new Date(eq.time),"HH時mm分")}頃、${maxIntRegionFormatted}${intensityDescription(maxScale)}。${commentText}
 
-　●各地の震度情報●
 ${intensityInfo}`;
     case "Destination":
       return `《震源速報》
@@ -307,8 +304,9 @@ ${intensityInfo}${over5m}`;
 
 // updateEQ
 async function updateEQ(){
-  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset";
+  //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset";
   //const url = "https://script.google.com/macros/s/AKfycbzgP8R7vowRFrefHbUIkAcGt4NFjJZcuVnnpVqIjpprlCA44PtTk7ffHs-f4HP8Yk8A/exec";
+  const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&offset=2&since_date=20251212&until_date=20251212&quake_type=ScalePrompt&min_scale=40";
   try{
     const response = await fetch(url);
     if(!response.ok) throw new Error(`APIアクセスエラー: ${response.status}`);
