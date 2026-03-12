@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>地震情報ビューアーv1.4.5</title>
+<title>地震情報ビューアーv1.5.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -325,7 +325,7 @@ async function updateEQ(){
 
 // 初回と自動更新
 updateEQ();
-setInterval(updateEQ, 2000);
+setInterval(updateEQ, 1000);
 
 // コピー機能
 copyBtn.addEventListener("click",()=>{
