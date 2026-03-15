@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.7.2</title>
+<title>地震情報ビューアーv1.7.3</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -361,7 +361,14 @@ document.getElementById("autoCopyBtn").addEventListener("click", () => {
   
 // コピー機能
 copyBtn.addEventListener("click",()=>{
-  copy();
+  const text = outputEl.textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const original = copyBtn.textContent;
+    copyBtn.textContent="コピー完了";
+    setTimeout(()=>{copyBtn.textContent=original;},1500);
+  }).catch(err=>{
+    alert("コピーに失敗しました: "+err);
+  });
 });
 </script>
 </body>
