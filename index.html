@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.6.1</title>
+<title>地震情報ビューアーv1.7.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -235,7 +235,7 @@ function buildAreaText(points,maxInt) {
 }
 // ★★★ ここまで buildAreaText ★★★
 
-
+let latestID = null;
 
 // buildEarthquakeBody（変更なし）
 function buildEarthquakeBody(latest){
@@ -302,6 +302,12 @@ ${tsunamiText}${commentText}
 　●各地の震度情報●
 ${intensityInfo}${over5m}`;
   }
+
+  if (latestID===null) latestID = latest.id;
+  if (latestID!==latest.id) {
+    copy();
+    latestID = latest.id;
+  }
 }
 
 // updateEQ
@@ -326,10 +332,9 @@ async function updateEQ(){
 
 // 初回と自動更新
 updateEQ();
-setInterval(updateEQ, 1000);
+setInterval(updateEQ, 2000);
 
-// コピー機能
-copyBtn.addEventListener("click",()=>{
+function copy() {
   const text = outputEl.textContent;
   navigator.clipboard.writeText(text).then(()=>{
     const original = copyBtn.textContent;
@@ -338,6 +343,12 @@ copyBtn.addEventListener("click",()=>{
   }).catch(err=>{
     alert("コピーに失敗しました: "+err);
   });
+
+}
+  
+// コピー機能
+copyBtn.addEventListener("click",()=>{
+  copy();
 });
 </script>
 </body>
