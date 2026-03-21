@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.8.3</title>
+<title>地震情報ビューアーv1.9.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -113,7 +113,7 @@ function buildTsunamiText(domestic, foreign) {
   return "#Tsunami:Error!";
 }
 function intensityDescription(scale){
-  return {'3':'揺れを感じました','4':'やや強い揺れを感じました','5弱':'強い揺れを感じました','5強':'強い揺れを感じました','6弱':'激しい揺れを感じました','6強':'激しい揺れを感じました','7':'非常に激しい揺れを感じました'}[scale]||'';
+  return {'3':'揺れを観測しました','4':'やや強い揺れを観測しました','5弱':'強い揺れを観測しました','5強':'強い揺れを観測しました','6弱':'激しい揺れを観測しました','6強':'激しい揺れを観測しました','7':'非常に激しい揺れを観測しました'}[scale]||'';
 }
 function compareScale(a,b){const order={'1':10,'2':20,'3':30,'4':40,'5弱':45,'5強':50,'6弱':55,'6強':60,'7':70};return(order[a]||0)-(order[b]||0);}
 
