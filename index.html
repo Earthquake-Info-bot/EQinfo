@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.9.1</title>
+<title>地震情報ビューアーv1.10.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -247,8 +247,8 @@ function buildEarthquakeBody(latest){
   const magnitude = (h.magnitude!=null&&h.magnitude>=0)?h.magnitude.toFixed(1):"不明";
   const depth = depthToText(h.depth);
   const tsunamiText = buildTsunamiText(eq.domesticTsunami, eq.foreignTsunami);
-  const commentText = (latest.comments&&latest.comments.freeFormComment)?`${latest.comments.freeFormComment.trim()}`:"";
-  const areaResult = (latest.points && latest.points.length > 0) 
+  const free = latest?.comments?.freeFormComment?.trim();
+  const commentText = free ? `\n\n備考：${free}` : "";  const areaResult = (latest.points && latest.points.length > 0) 
         ? buildAreaText(latest.points, maxScale) 
         : { intensityText: "▽震度情報不明", maxIntRegionFormatted: "対象なし" };
 
