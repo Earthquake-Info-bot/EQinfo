@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.10.1</title>
+<title>地震情報ビューアーv1.10.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -134,7 +134,12 @@ function buildAreaText(points,maxInt) {
       chiiki = "1";
       const scale = scaleToText(p.scale);
       const addr = p.addr; // 例: "鳥取県西部" や "東京都千代田区"
-      let city = addr.replace(/^(.*?[都道府県])/, '');
+      let city = "";
+      if (addr.includes("京都府")) {
+        city = addr.replace("京都府","");
+      } else {
+        city = addr.replace(/^(.*?[都道府県])/, '');
+      }
       if (p.pref==="北海道") city = city.replace("地方", "");
       const key = `${p.pref}:${city}`;
       if (!cityMaxScale[key] || compareScale(scale, cityMaxScale[key]) > 0) {
