@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.11.1</title>
+<title>地震情報ビューアーv1.11.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -325,7 +325,7 @@ async function updateEQ(){
     outputEl.textContent = messages.join("\n\n--------------------\n\n");
     const annTime = formatDate(data[0].time);
 
-    statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? ----/--/-- --:--:--}`;
+    statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? "----/--/-- --:--:--"}`;
   }catch(e){
     outputEl.textContent="取得エラー: "+e.message;
   }
