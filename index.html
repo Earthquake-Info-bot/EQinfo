@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.11.3</title>
+<title>地震情報ビューアーv1.11.4</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -323,7 +323,7 @@ async function updateEQ(){
 
     const messages = data.slice(0,5).map(buildEarthquakeBody);
     outputEl.textContent = messages.join("\n\n--------------------\n\n");
-    const annTime = formatDate(new Date(data[0].time));
+    const annTime = data[0].time;
 
     statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? "----/--/-- --:--:--"}`;
   }catch(e){
