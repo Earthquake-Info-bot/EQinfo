@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv1.12.3</title>
+<title>[ws]地震情報ビューアーv2.3.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -18,10 +18,19 @@ body {
   margin: 0; 
   padding: 0; 
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
+  white-space: pre-wrap;
+  word-break: break-all;      /* ←これが一番効く */
+  overflow-wrap: anywhere;   /* ←保険 */
 }
 #status { 
   font-size: 12px; 
   margin-bottom: 0px; 
+  white-space: pre-wrap;
+}
+#ws_status { 
+  font-size: 12px; 
+  margin-bottom: 0px; 
+  white-space: pre-wrap;
 }
 #copyBtn {
   font-size: 12px;
@@ -29,11 +38,16 @@ body {
   margin-bottom: 0px;
   cursor: pointer;
 }
+body.flash-bg {
+  background-color: #cbe3f3 !important;
+  transition: background-color 0.3s;
+}
 </style>
 </head>
 <body>
 <div id="status">更新中...</div>
-<button id="copyBtn">&nbsp;<br>　　　本文をコピー　　　<br>&nbsp;</button>
+<div id="ws_status">更新中...</div>
+<button id="copyBtn">&nbsp;<br>　　　本文をコピー　　　<br>&nbsp;</button><label><input type="checkbox" id="modeSwitch">WebSocketを使用</label>
 <pre id="eew">読み込み中...</pre>
 
 <script>
@@ -58,6 +72,7 @@ const chihoMap = {
 // DOM
 const outputEl = document.getElementById("eew");
 const statusEl = document.getElementById("status");
+const ws_statusEl = document.getElementById("ws_status");
 const copyBtn = document.getElementById("copyBtn");
 
 // 日時フォーマット
@@ -326,14 +341,22 @@ async function updateEQ(){
     const annTime = data[0].time;
 
     statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? "----/--/-- --:--:--"}`;
+    ws_statusEl.textContent = `WebSocket未接続`;
   }catch(e){
     outputEl.textContent="取得エラー: "+e.message;
   }
 }
 
+let useWS = false;
+  
 // 初回と自動更新
 updateEQ();
-setInterval(updateEQ, 2000);
+  
+setInterval(() => {
+  if (!useWS) {
+    updateEQ();
+  }
+}, 2000);
   
 // コピー機能
 copyBtn.addEventListener("click",()=>{
@@ -345,6 +368,113 @@ copyBtn.addEventListener("click",()=>{
   }).catch(err=>{
     alert("コピーに失敗しました: "+err);
   });
+});
+
+/* ================================
+   WebSocket（P2P地震情報）
+   ================================ */
+let dotVisible = true;
+let blinkTimer = null;
+
+function startBlink() {
+  if (blinkTimer) return; // 二重起動防止
+
+  blinkTimer = setInterval(() => {
+    dotVisible = !dotVisible;
+    updateStatusText();
+  }, 500);
+}
+
+function stopBlink() {
+  clearInterval(blinkTimer);
+  blinkTimer = null;
+  dotVisible = false;
+  updateStatusText();
+}
+
+function updateStatusText() {
+  const dot = dotVisible ? "●" : "　"; // ← 全角スペースでズレ防止
+  ws_statusEl.textContent = `WebSocket接続完了/情報待機中${dot}`;
+}
+  
+let ws;
+const checkbox = document.getElementById("modeSwitch");
+
+function connectWS() {
+  ws = new WebSocket("wss://api.p2pquake.net/v2/ws");
+  //ws = new WebSocket("wss://api-realtime-sandbox.p2pquake.net/v2/ws");
+  
+  ws.onopen = () => {
+    console.log("[WebSocket]Connected");
+    startBlink();
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      
+      // 551（地震）以外は無視して安全に動かす
+      if (!data || data.code !== 551) return;
+      
+      // 背景色2秒だけ変更
+      document.body.classList.add("flash-bg");
+      setTimeout(() => {
+        document.body.classList.remove("flash-bg");
+      }, 2000);
+
+      console.log("[WS] Earthquake data received:", data);
+
+      // 表示更新（updateEQ を通さず直接反映）
+      const text = buildEarthquakeBody(data);
+      outputEl.textContent = text;
+
+      statusEl.textContent =
+        `受信日時: ${formatDate(new Date())}\n発表日時: ${data.time}`;
+
+    } catch (e) {
+      ws_statusEl.textContent = ("[WS ERROR]"+ e);
+    }
+  };
+
+  ws.onerror = (err) => {
+    console.error("[WS] Error:", err);
+    stopBlink();
+    ws_statusEl.textContent = "WebSocketエラー（自動再接続待機中）";
+  };
+
+  ws.onclose = () => {
+    console.warn("[WS] Closed. Reconnecting...");
+    stopBlink();
+
+    if (!useWS) {
+      ws_statusEl.textContent = "WebSocket停止中";
+      return;
+    }
+    
+    ws_statusEl.textContent = "WebSocket切断・再接続中…";
+
+    // 1.5秒後に再接続（安全）
+    setTimeout(connectWS, 1500);
+  };
+}
+
+function stopWS() {
+  useWS = false;
+
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+}
+
+checkbox.addEventListener("change", () => {
+  if (checkbox.checked) {
+    useWS = true;
+    connectWS();
+  } else {
+    stopWS();
+    startPolling(); // API側
+  }
 });
 </script>
 </body>
