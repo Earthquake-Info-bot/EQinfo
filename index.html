@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.3.2</title>
+<title>[ws]T地震情報ビューアーv2.3.3</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -152,6 +152,8 @@ function buildAreaText(points,maxInt) {
       let city = "";
       if (addr.includes("京都府")) {
         city = addr.replace("京都府","");
+      } else if(addr==="奈良県") {
+        city = "奈良県";
       } else {
         city = addr.replace(/^(.*?[都道府県])/, '');
       }
@@ -327,7 +329,8 @@ ${intensityInfo}${over5m}`;
 
 // updateEQ
 async function updateEQ(){
-  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
+  //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
+  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset=4";
   //const url = "https://script.google.com/macros/s/AKfycbzgP8R7vowRFrefHbUIkAcGt4NFjJZcuVnnpVqIjpprlCA44PtTk7ffHs-f4HP8Yk8A/exec";
   //const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&offset=2&since_date=20251212&until_date=20251212&quake_type=ScalePrompt&min_scale=40";
   try{
