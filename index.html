@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.7.1</title>
+<title>[ws]地震情報ビューアーv2.7.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -438,6 +438,8 @@ let ws;
 const checkbox = document.getElementById("modeSwitch");
 
 function connectWS() {
+  if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+  
   ws = new WebSocket("wss://api.p2pquake.net/v2/ws");
   //ws = new WebSocket("wss://api-realtime-sandbox.p2pquake.net/v2/ws");
   
