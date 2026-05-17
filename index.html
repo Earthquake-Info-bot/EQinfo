@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.3.3</title>
+<title>[ws]地震情報ビューアーv2.4.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -372,6 +372,16 @@ copyBtn.addEventListener("click",()=>{
     alert("コピーに失敗しました: "+err);
   });
 });
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("textarea, input, select")) return;
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    copyBtn.click(); // ←これだけでOK
+  }
+});
+  
 
 /* ================================
    WebSocket（P2P地震情報）
