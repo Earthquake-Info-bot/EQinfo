@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.6.1</title>
+<title>[ws]地震情報ビューアーv2.7.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -335,6 +335,7 @@ ${intensityInfo}${over5m}`;
 }
 
 let running = false;
+let infoID = "";
 async function updateEQ() {
   if (running) return;
   running = true;
@@ -351,7 +352,13 @@ async function updateEQ() {
       outputEl.textContent = "データが存在しません";
       return;
     }
-
+    if (infoID === data[0].id) {
+      const annTime = data[0].time;
+      statusEl.textContent = `最終更新: ${formatDate(new Date())}（同IDのため非処理）\n発表日時: ${annTime ?? "----"}`;
+      return;
+    }
+    infoID = data[0].id;
+    
     const messages = data.slice(0,5).map(buildEarthquakeBody);
     outputEl.textContent = messages.join("\n\n--------------------\n\n");
 
