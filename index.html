@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.5.1</title>
+<title>[ws]地震情報ビューアーv2.6.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -304,6 +304,12 @@ ${formatDate(new Date(eq.time),"HH時mm分")}頃、${place}で地震がありま
 　震源の深さ:${depth}
 ${tsunamiText}${commentText}`;
     case "Foreign":
+      if (commentText.includes("大規模な噴火")&&commentText.includes("規模の大きな地震は発生していない")) {
+        return `《遠地大規模噴火情報》
+${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で大規模噴火がありました。
+
+${tsunamiText.replaceAll("地震","噴火")}${commentText.replaceAll("備考：","").replaceAll("遠地地震に関する情報","関連情報").replaceAll("地震","噴火").replaceAll("本情報の冒頭に「海外で規模の大きな噴火がありました。」や「震源地」とありますが、これは「関連情報」を作成する際に自動的に付与される文言です。実際には、規模の大きな噴火は発生していない点に留意してください。","本情報は「遠地地震に関する情報」として発表されたものを改変した情報です。")}`;
+      } else {
       return `《遠地地震情報》
 ${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で規模の大きな地震がありました。
 　最大震度:${maxScale}
@@ -313,6 +319,7 @@ ${tsunamiText}${commentText}
 
 　●各地の震度情報●
 ▽震度観測なし`;
+      }
     case "DetailScale":
     default:
       return `《地震情報》
@@ -328,29 +335,36 @@ ${intensityInfo}${over5m}`;
 }
 
 let running = false;
-async function updateEQ(){
+async function updateEQ() {
   if (running) return;
   running = true;
-  const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
-  //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset=4";
-  //const url = "https://script.google.com/macros/s/AKfycbzgP8R7vowRFrefHbUIkAcGt4NFjJZcuVnnpVqIjpprlCA44PtTk7ffHs-f4HP8Yk8A/exec";
-  //const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&offset=2&since_date=20251212&until_date=20251212&quake_type=ScalePrompt&min_scale=40";
-  try{
+
+  try {
+    const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
     const response = await fetch(url);
-    if(!response.ok) throw new Error(`APIアクセスエラー: ${response.status}`);
+
+    if (!response.ok) throw new Error(`APIエラー: ${response.status}`);
+
     const data = await response.json();
-    if(!data||data.length===0){ outputEl.textContent="データが存在しません"; return; }
+
+    if (!data || data.length === 0) {
+      outputEl.textContent = "データが存在しません";
+      return;
+    }
 
     const messages = data.slice(0,5).map(buildEarthquakeBody);
     outputEl.textContent = messages.join("\n\n--------------------\n\n");
-    const annTime = data[0].time;
 
-    statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? "----/--/-- --:--:--"}`;
+    const annTime = data[0].time;
+    statusEl.textContent = `最終更新: ${formatDate(new Date())}\n発表日時: ${annTime ?? "----"}`;
+
     ws_statusEl.textContent = `WebSocket未接続`;
-  }catch(e){
-    outputEl.textContent="取得エラー: "+e.message;
+
+  } catch (e) {
+    outputEl.textContent = "取得エラー: " + e.message;
+  } finally {
+    running = false; // ←これが重要
   }
-  running = false;
 }
 
 let useWS = false;
