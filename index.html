@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ws]地震情報ビューアーv2.4.1</title>
+<title>[ws]地震情報ビューアーv2.5.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -327,8 +327,10 @@ ${intensityInfo}${over5m}`;
   }
 }
 
-// updateEQ
+let running = false;
 async function updateEQ(){
+  if (running) return;
+  running = true;
   const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
   //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1&offset=4";
   //const url = "https://script.google.com/macros/s/AKfycbzgP8R7vowRFrefHbUIkAcGt4NFjJZcuVnnpVqIjpprlCA44PtTk7ffHs-f4HP8Yk8A/exec";
@@ -348,6 +350,7 @@ async function updateEQ(){
   }catch(e){
     outputEl.textContent="取得エラー: "+e.message;
   }
+  running = false;
 }
 
 let useWS = false;
@@ -486,7 +489,6 @@ checkbox.addEventListener("change", () => {
     connectWS();
   } else {
     stopWS();
-    startPolling(); // API側
   }
 });
 </script>
