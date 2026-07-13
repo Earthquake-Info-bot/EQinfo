@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv2.8.1</title>
+<title>地震情報ビューアーvT2.9.1</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -293,7 +293,7 @@ function buildEarthquakeBody(latest){
   
 let over5m = "";
 if(unreportedAreas.length > 0){
-  over5m = "\n\n▽震度5弱以上と推定（未入電）\n" + unreportedAreas.join(" ");
+  over5m = "\n\n［未入電］震度5弱以上と推定されるが震度情報を入手していない観測点が${unreportedAreas.length}件あります。" + (unreportedAreas.length<=10 ? unreportedAreas.join("、")+"\n\n" : "\n\n");
 }
 
   switch(latest.issue?.type){
@@ -346,7 +346,8 @@ async function updateEQ() {
   running = true;
 
   try {
-    const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
+    //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
+    const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&quake_type=DetailScale&min_scale=70";
     const response = await fetch(url);
 
     if (!response.ok) throw new Error(`APIエラー: ${response.status}`);
