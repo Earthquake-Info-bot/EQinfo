@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T地震情報ビューアーv2.9.2</title>
+<title>地震情報ビューアーv2.9.2</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -346,8 +346,8 @@ async function updateEQ() {
   running = true;
 
   try {
-    //const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
-    const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&quake_type=DetailScale&min_scale=70";
+    const url = "https://api.p2pquake.net/v2/history?codes=551&limit=1";
+    //const url = "https://api.p2pquake.net/v2/jma/quake?limit=1&quake_type=DetailScale&min_scale=70";
     const response = await fetch(url);
 
     if (!response.ok) throw new Error(`APIエラー: ${response.status}`);
