@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv2.9.2</title>
+<title>地震情報ビューアーv2.9.3</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -322,7 +322,7 @@ ${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で�
 　震源の深さ:${depth}
 ${tsunamiText}${commentText}
 
-　●各地の震度情報●
+◆各地の震度情報◆
 ▽震度観測なし`;
       }
     case "DetailScale":
@@ -334,7 +334,7 @@ ${formatDate(new Date(eq.time),"yyyy年MM月dd日HH時mm分")}頃、${place}で�
 　震源の深さ:${depth}
 ${tsunamiText}${commentText}${over5m}
 
-　●各地の震度情報●
+◆各地の震度情報◆
 ${intensityInfo}`;
   }
 }
