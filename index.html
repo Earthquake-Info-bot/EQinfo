@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震情報ビューアーv2.9.3</title>
+<title>地震情報ビューアーv2.9.4</title>
 <style>
 body {
   font-family:"Yu Gothic","YuGothic","メイリオ",sans-serif;
@@ -277,7 +277,7 @@ function buildEarthquakeBody(latest){
   const free = latest?.comments?.freeFormComment?.trim();
   const commentText = free ? `\n\n備考：${free}` : "";  const areaResult = (latest.points && latest.points.length > 0) 
         ? buildAreaText(latest.points, maxScale) 
-        : { intensityText: "▽震度情報不明", maxIntRegionFormatted: "対象なし" };
+        : { intensityText: "▽震度観測なし", maxIntRegionFormatted: "対象なし" };
 
   // 震度情報テキストだけ取り出す
   const intensityInfo = areaResult.intensityText;
